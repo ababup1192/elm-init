@@ -1,0 +1,31 @@
+<html>
+<head>
+  <style>
+    /* you can style your program here */
+  </style>
+</head>
+<body>
+  <main></main>
+  <script>
+    <% if flags { %>
+    var storedData = localStorage.getItem('echo history');
+    var flags = storedData ? JSON.parse(storedData) : [];
+    <% } %>
+    var app = Elm.Main.init({ node: document.querySelector('main')<% if flags { %> ,flags: flags<% } %> })
+
+    <% if ports { %>
+    var socket = new WebSocket('wss://echo.websocket.org');
+
+    app.ports.sendMessage.subscribe(function(message) {
+         flags.push(message);
+         localStorage.setItem('echo history', JSON.stringify(flags));
+         socket.send(message);
+    });
+
+    socket.addEventListener("message", function(event) {
+        app.ports.messageReceiver.send(event.data);
+    });
+    <% } %>
+  </script>
+</body>
+</html>

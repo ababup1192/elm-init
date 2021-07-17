@@ -1,0 +1,111 @@
+<% if ports { %>port <% } %>module Main exposing (..)
+
+import Browser
+import Html exposing (..)
+import Html.Attributes exposing (..)
+import Html.Events exposing (..)
+
+<% if ports { %>
+port sendMessage : String -> Cmd msg
+
+
+port messageReceiver : (String -> msg) -> Sub msg
+<% } %>
+
+type alias Model =
+    { draft : String
+    , messages : List String
+    }
+
+<% if flags { %>
+init : List String -> ( Model, Cmd Msg )
+init flags =
+    ( { draft = "", messages = flags }
+    , Cmd.none
+    )
+<% } else { %>
+init : () -> ( Model, Cmd Msg )
+init _ =
+    ( { draft = "", messages = [] }
+    , Cmd.none
+    )
+<% } %>
+<% if ports { %>
+type Msg
+    = DraftChanged String
+    | Send
+    | Recv String
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        DraftChanged draft ->
+            ( { model | draft = draft }
+            , Cmd.none
+            )
+
+        Send ->
+            ( { model | draft = "" }
+            , sendMessage model.draft
+            )
+
+        Recv message ->
+            ( { model | messages = model.messages ++ [ message ] }
+            , Cmd.none
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    messageReceiver Recv
+<% } else { %>
+type Msg
+    = DraftChanged String
+    | Send
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case msg of
+        DraftChanged draft ->
+            ( { model | draft = draft }
+            , Cmd.none
+            )
+
+        Send ->
+            ( { model | draft = "", messages = model.messages ++ [ model.draft ] }
+            , Cmd.none
+            )
+
+
+subscriptions : Model -> Sub Msg
+subscriptions _ =
+    Sub.none
+<% } %>
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ h1 [] [ text "Echo Chat" ]
+        , input
+            [ type_ "text"
+            , placeholder "Draft"
+            , onInput DraftChanged
+            , value model.draft
+            ]
+            []
+        , button [ onClick Send ] [ text "Send" ]
+        , ul []
+            (List.map (\msg -> li [] [ text msg ]) model.messages)
+        ]
+
+
+main : Program (<% if flags { %>List String<% } %>) Model Msg
+main =
+    Browser.element
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
