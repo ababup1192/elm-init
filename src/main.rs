@@ -34,6 +34,7 @@ enum Mode {
     Element,
     Document,
     Application,
+    UnSelected,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -53,7 +54,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             "element" => Mode::Element,
             "document" => Mode::Document,
             "application" => Mode::Application,
-            _ => panic!("Invalid mode."),
+            _ => Mode::UnSelected,
         };
         let flags = matches.is_present("flags");
         let ports = matches.is_present("ports");
@@ -103,6 +104,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 html_buf = "".to_string().into_bytes();
                 do_output = false;
                 println!("You should use elm-spa( https://www.elm-spa.dev/ ).")
+            }
+            Mode::UnSelected => {
+                elm_buf = "".to_string().into_bytes();
+                html_buf = "".to_string().into_bytes();
+                do_output = false;
+                println!("Invalid mode.\nUSAGE:\nelm-init [FLAGS] <mode>\nFor more information try --help")
             }
         }
         if do_output {
